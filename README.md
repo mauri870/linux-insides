@@ -34,7 +34,7 @@ Fique a vontade para criar uma issue ou pull request caso tenha algum problema o
 
 **Não esqueça de ler o [CONTRIBUTING.md](https://github.com/0xAX/linux-insides/blob/master/CONTRIBUTING.md) antes de enviar qualquer alteração.**
 
-Caso deseje contribuir com a tradução em Portugûes do Brasil utilize as issues e pull requests desse repositório, caso contrário utilize o oficial.
+Caso deseje contribuir com a tradução em Portugûes do Brasil utilize as issues e pull requests desse repositório, caso contrário utilize o oficial. A tradução será mantida no branch `translation-ptbr`, o `master` será mantido em sincronia com o upstream.
 
 ![image](http://oi58.tinypic.com/23upobq.jpg)
 
