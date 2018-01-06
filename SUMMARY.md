@@ -1,11 +1,11 @@
-### Summary
+### Sumário
 
 * [Booting](Booting/README.md)
-    * [From bootloader to kernel](Booting/linux-bootstrap-1.md)
-    * [First steps in the kernel setup code](Booting/linux-bootstrap-2.md)
-    * [Video mode initialization and transition to protected mode](Booting/linux-bootstrap-3.md)
-    * [Transition to 64-bit mode](Booting/linux-bootstrap-4.md)
-    * [Kernel decompression](Booting/linux-bootstrap-5.md)
+    * [Do bootloader ao kernel](Booting/linux-bootstrap-1.md)
+    * [Primeiros passos na inicialização do kernel](Booting/linux-bootstrap-2.md)
+    * [Inicialização do modo de vídeo e transição para o modo protegido](Booting/linux-bootstrap-3.md)
+    * [Transição para o modo 64 bits](Booting/linux-bootstrap-4.md)
+    * [Descompressão do kernel](Booting/linux-bootstrap-5.md)
 * [Initialization](Initialization/README.md)
     * [First steps in the kernel](Initialization/linux-initialization-1.md)
     * [Early interrupts handler](Initialization/linux-initialization-2.md)
@@ -34,6 +34,7 @@
     * [vsyscall and vDSO](SysCall/syscall-3.md)
     * [How the Linux kernel runs a program](SysCall/syscall-4.md)
     * [Implementation of the open system call](SysCall/syscall-5.md)
+    * [Limits on resources in Linux](SysCall/syscall-6.md)
 * [Timers and time management](Timers/README.md)
     * [Introduction](Timers/timers-1.md)
     * [Clocksource framework](Timers/timers-2.md)
@@ -62,6 +63,7 @@
     * [Per-CPU variables](Concepts/per-cpu.md)
     * [Cpumasks](Concepts/cpumask.md)
     * [The initcall mechanism](Concepts/initcall.md)
+    * [Notification Chains](Concepts/notification_chains.md)
 * [Data Structures in the Linux Kernel](DataStructures/README.md)
     * [Doubly linked list](DataStructures/dlist.md)
     * [Radix tree](DataStructures/radix-tree.md)

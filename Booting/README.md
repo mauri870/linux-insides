@@ -1,10 +1,9 @@
-# Kernel Boot Process
+# Kernel e o processo de Boot
 
-This chapter describes the linux kernel boot process. Here you will see a
-couple of posts which describes the full cycle of the kernel loading process:
+Este capítulo aborda o processo de boot do kernel linux. Nele você verá alguns posts que descrevem o ciclo completo do carregamento do kernel:
 
-* [From the bootloader to kernel](linux-bootstrap-1.md) - describes all stages from turning on the computer to running the first instruction of the kernel.
-* [First steps in the kernel setup code](linux-bootstrap-2.md) - describes first steps in the kernel setup code. You will see heap initialization, query of different parameters like EDD, IST and etc...
-* [Video mode initialization and transition to protected mode](linux-bootstrap-3.md) - describes video mode initialization in the kernel setup code and transition to protected mode.
-* [Transition to 64-bit mode](linux-bootstrap-4.md) - describes preparation for transition into 64-bit mode and details of transition.
-* [Kernel Decompression](linux-bootstrap-5.md) - describes preparation before kernel decompression and details of direct decompression.
+* [Do bootloader ao Kernel](linux-bootstrap-1.md) - descreve todos os estágios desde que o computador é ligado até a execução da primeira instrução do kernel.
+* [Primeiros passos no código de inicialização do kernel](linux-bootstrap-2.md) - descreve as primeiras etapas do código de inicialização do kernel. Você verá a inicialização do heap, consulta a diferentes parâmetros como EDD, IST e etc...
+* [Inicialização do modo de vídeo e transição para o modo protegido](linux-bootstrap-3.md) - descreve o modo de inicialização de video no código inicial do kernel e a transição para o modo protegido.
+* [Transição para o modo 64 bits](linux-bootstrap-4.md) - descreve a preparação e detalhes  da transição ao modo 64 bits.
+* [Descompressão do kernel](linux-bootstrap-5.md) - descreve a preparação antes da descompressão do kernel e detalhes sobre a descompressão em si.
