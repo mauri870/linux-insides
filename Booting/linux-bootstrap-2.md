@@ -1,63 +1,63 @@
-Kernel booting process. Part 2.
+Processo de Booting do Kernel. Parte 2.
 ================================================================================
 
-First steps in the kernel setup
+Primeiros passos na inicialização do kernel
 --------------------------------------------------------------------------------
 
-We started to dive into linux kernel insides in the previous [part](linux-bootstrap-1.md) and saw the initial part of the kernel setup code. We stopped at the first call to the `main` function (which is the first function written in C) from [arch/x86/boot/main.c](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/arch/x86/boot/main.c).
+Nós iniciamos nossa jornada pelo kernel Linux na [parte 1](linux-bootstrap-1.md) e vimos o início do código de inicialização do kernel. Nós paramos na primeira chamada para a função `main` (que é a propósito a primeira função escrita em C) em [arch/x86/boot/main.c](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/arch/x86/boot/main.c).
 
-In this part, we will continue to research the kernel setup code and
-* see what `protected mode` is,
-* some preparation for the transition into it,
-* the heap and console initialization,
-* memory detection, CPU validation, keyboard initialization
-* and much much more.
+Nesta parte continuaremos nossa jornada pelo kernel e veremos:
+* o que é o `modo protegido`,
+* a preparação e transição para ele,
+* a inicialização da heap e console,
+* detecção de memória, validação de CPU e inicialização do teclado
+* e muito mais.
 
-So, Let's go ahead.
+Então, vamos em frente!
 
-Protected mode
+Modo protegido
 --------------------------------------------------------------------------------
 
-Before we can move to the native Intel64 [Long Mode](http://en.wikipedia.org/wiki/Long_mode), the kernel must switch the CPU into protected mode.
+Antes de entrarmos no nativo Intel64 [Long Mode](http://en.wikipedia.org/wiki/Long_mode), o kernel precisa colocar o CPU em modo protegido.
 
-What is [protected mode](https://en.wikipedia.org/wiki/Protected_mode)? Protected mode was first added to the x86 architecture in 1982 and was the main mode of Intel processors from the [80286](http://en.wikipedia.org/wiki/Intel_80286) processor until Intel 64 and long mode came.
+O que é [modo protegido](https://pt.wikipedia.org/wiki/Modo_protegido)? O modo protegido foi inicialmente adicionado na arquitetura x86 em 1982 e é o modo de operação principal de processadores Intel desde o [80286](https://pt.wikipedia.org/wiki/Intel_80286) até a chegada do Intel 64 e long mode.
 
-The main reason to move away from [Real mode](http://wiki.osdev.org/Real_Mode) is that there is very limited access to the RAM. As you may remember from the previous part, there is only 2<sup>20</sup> bytes or 1 Megabyte, sometimes even only 640 Kilobytes of RAM available in the Real mode.
+A razão principal para sair do [Modo Real](http://wiki.osdev.org/Real_Mode) é que o accesso a memória RAM é muito limitado. Como você deve lembrar da parte 1, estão disponíveis somente 2<sup>20</sup> bytes ou 1 Megabyte, algumas vezes somente 640 Kilobytes de RAM estão disponíveis no Modo Real.
 
-Protected mode brought many changes, but the main one is the difference in memory management. The 20-bit address bus was replaced with a 32-bit address bus. It allowed access to 4 Gigabytes of memory vs 1 Megabyte of real mode. Also, [paging](http://en.wikipedia.org/wiki/Paging) support was added, which you can read about in the next sections.
+O Modo Protegido traz muitas mudanças, porém a principal é a diferença no gerenciamento de memória. O barramento de endereços de 20-bit é substituído por um de 32-bit. Isso possibilita acesso a 4 Gigabytes de memória contra o 1 Megabyte disponível em Modo Real. Além disso, suporte a [paginação de memória](https://pt.wikipedia.org/wiki/Memória_paginada) é adicionado, que você pôde conferir na próxima seção.
 
-Memory management in Protected mode is divided into two, almost independent parts:
+O gerenciamento de memória no Modo Protegido é separado em duas etapas praticamente independentes:
 
-* Segmentation
-* Paging
+* Segmentação
+* Paginação
 
-Here we will only see segmentation. Paging will be discussed in the next sections.
+Vamos ver primeiro sobre segmentação, paginação será abordada na seção seguinte.
 
-As you can read in the previous part, addresses consist of two parts in real mode:
+Como você pode ler na parte anterior, endereços são compostos por dois componentes no modo real:
 
-* Base address of the segment
-* Offset from the segment base
+* Endereço base do segmento
+* Deslocamento/Offset a partir do segmento base
 
-And we can get the physical address if we know these two parts by:
+E nós podemos computar o endereço físico se tivermos conhecimento desses dois valores acima:
 
 ```
 PhysicalAddress = Segment Selector * 16 + Offset
 ```
 
-Memory segmentation was completely redone in protected mode. There are no 64 Kilobyte fixed-size segments. Instead, the size and location of each segment is described by an associated data structure called _Segment Descriptor_. The segment descriptors are stored in a data structure called `Global Descriptor Table` (GDT).
+Segmentação de memória foi completamente removida no modo protegido. Não existem segmentos de tamanho fixo em 64 Kilobytes, o tamanho e localização de cada segmento é definido por uma estrutura de dados chamada de _Segment Descriptor/Descritores de Segmento_. Estes descritores são armazenados em uma estrutura de dados chamada `Global Descriptor Table` (GDT).
 
-The GDT is a structure which resides in memory. It has no fixed place in the memory so, its address is stored in the special `GDTR` register. Later we will see the GDT loading in the Linux kernel code. There will be an operation for loading it into memory, something like:
+A GDT é uma estrutura que é mantida em memória. Ela não tem um endereço físico, portanto existe um registrador especial chamado `GDTR` responsável por armazenar esse endereço. Nós veremos mais adiante a GDT sendo carregada pelo kernel Linux. Encontraremos uma operação para carregá-la em memória, algo como:
 
 ```assembly
 lgdt gdt
 ```
 
-where the `lgdt` instruction loads the base address and limit(size) of global descriptor table to the `GDTR` register. `GDTR` is a 48-bit register and consists of two parts:
+onde a instrução `lgdt` carrega o endereço base e o limite(tamanho) da GDT no registrador `GDTR`. O `GDTR` é um registrador de 48-bit que é composto por duas partes:
 
- * size(16-bit) of global descriptor table;
- * address(32-bit) of the global descriptor table.
+ * tamanho(16-bit) da GDT;
+ * endereço(32-bit) da GDT
 
-As mentioned above the GDT contains `segment descriptors` which describe memory segments.  Each descriptor is 64-bits in size. The general scheme of a descriptor is:
+Como dito acima a GDT contém descritores de segmento que representam segmentos de memória.  Cada descritor possui 64-bits de tamanho. O esquema padrão de um descritor é o seguinte:
 
 ```
  63         56         51   48    45           39        32 
@@ -75,27 +75,27 @@ As mentioned above the GDT contains `segment descriptors` which describe memory 
 ------------------------------------------------------------
 ```
 
-Don't worry, I know it looks a little scary after real mode, but it's easy. For example LIMIT 15:0 means that bits 0-15 of Limit are located in the beginning of the Descriptor. The rest of it is in LIMIT 19:16, which is located at bits 48-51 of the Descriptor. So, the size of Limit is 0-19 i.e 20-bits. Let's take a closer look at it:
+Não se preocupe. Eu sei que parece um pouco assustador depois do Modo Real, mas na verdade é simples. Por exemplo LIMIT 15:0 significa que os bits 0-15 de LIMIT estão localizados no início do descritor. O restante está em LIMIT 19:16, que está localizado entre os bits 48-51 do descritor. O tamanho de LIMIT então é 0-19 ou 20-bits. Vamos ver isso com mais detalhes:
 
-1. Limit[20-bits] is at 0-15, 48-51 bits. It defines `length_of_segment - 1`. It depends on `G`(Granularity) bit.
+1. Limit[20-bits] está entre 0-15, 48-51 bits. Ele define `tamanho_do_segmento - 1`. Ele depende do bit `G`(Granularidade).
 
-  * if `G` (bit 55) is 0 and segment limit is 0, the size of the segment is 1 Byte
-  * if `G` is 1 and segment limit is 0, the size of the segment is 4096 Bytes
-  * if `G` is 0 and segment limit is 0xfffff, the size of the segment is 1 Megabyte
-  * if `G` is 1 and segment limit is 0xfffff, the size of the segment is 4 Gigabytes
+  * se `G` (bit 55) e o limite de segmento forem 0, o tamanho do segmento é 1 Byte
+  * se `G` for 1 e o limite de segmento for 0, o tamanho do segmento é 4096 Bytes
+  * se `G` for 0 e o limite de segmento for 0xfffff, o tamanho do segmento é 1 Megabyte
+  * se `G` for 1 e o limite de segmento for 0xfffff, o tamanho do segmento é 4 Gigabytes
 
-  So, it means that if
-  * if G is 0, Limit is interpreted in terms of 1 Byte and the maximum size of the segment can be 1 Megabyte.
-  * if G is 1, Limit is interpreted in terms of 4096 Bytes = 4 KBytes = 1 Page and the maximum size of the segment can be 4 Gigabytes. Actually, when G is 1, the value of Limit is shifted to the left by 12 bits. So, 20 bits + 12 bits = 32 bits and 2<sup>32</sup> = 4 Gigabytes.
+  Resumidamente:
+  * se G for 0, Limit é interpretado com uma escala de 1 Byte e o tamanho máximo do segmento é 1 Megabyte.
+  * se G for 1, Limit é interpretado com uma escala de 4096 Bytes = 4 KBytes = 1 Página/Page e o tamanho máximo do segmento pode ser 4 Gigabytes. Na prática, quando G é igual a 1, o valor de Limit é deslocado 12 bits para a esquerda. Então, 20 bits + 12 bits = 32 bits e 2<sup>32</sup> = 4 Gigabytes.
 
-2. Base[32-bits] is at 16-31, 32-39 and 56-63 bits. It defines the physical address of the segment's starting location.
+2. Base[32-bits] está entre 16-31, 32-39 e 56-63 bits. Ele define o endereço físico da localização de início do segmento.
 
-3. Type/Attribute[5-bits] is at 40-44 bits. It defines the type of segment and kinds of access to it.
-  * `S` flag at bit 44 specifies descriptor type. If `S` is 0 then this segment is a system segment, whereas if `S` is 1 then this is a code or data segment (Stack segments are data segments which must be read/write segments).
+3. Type/Attribute[5-bits] está entre 40-44 bits. Ele define o tipo de segmento e as formas de acesso a ele.
+  * A flag `S` no bit 44 especifica o tipo de descritor. Se `S` for 0 então esse segmento é um segmento de sistema, caso contrário se `S` for 1 então este é um segmento de código ou dados (segmentos de Stack são segmentos de dados que precisam de acesso leitura/escrita).
 
-To determine if the segment is a code or data segment we can check its Ex(bit 43) Attribute marked as 0 in the above diagram. If it is 0, then the segment is a Data segment otherwise it is a code segment.
+Para determinar se o segmento é de código ou dados nós podemos checar o atributo (bit 43) marcado como 0 no diagrama acima. Se ele for igual a 0, então o segmento é de dados caso contrário ele é um segmento de código.
 
-A segment can be of one of the following types:
+Um segmento pode ser um dos tipos abaixo:
 
 ```
 |           Type Field        | Descriptor Type | Description
@@ -121,24 +121,24 @@ A segment can be of one of the following types:
 | 15          1    1    1   1 | Code            | Execute/Read, conforming, accessed
 ```
 
-As we can see the first bit(bit 43) is `0` for a _data_ segment and `1` for a _code_ segment. The next three bits (40, 41, 42) are either `EWA`(*E*xpansion *W*ritable *A*ccessible) or CRA(*C*onforming *R*eadable *A*ccessible).
-  * if E(bit 42) is 0, expand up otherwise expand down. Read more [here](http://www.sudleyplace.com/dpmione/expanddown.html).
-  * if W(bit 41)(for Data Segments) is 1, write access is allowed otherwise not. Note that read access is always allowed on data segments.
-  * A(bit 40) - Whether the segment is accessed by processor or not.
-  * C(bit 43) is conforming bit(for code selectors). If C is 1, the segment code can be executed from a lower level privilege e.g. user level. If C is 0, it can only be executed from the same privilege level.
-  * R(bit 41)(for code segments). If 1 read access to segment is allowed otherwise not. Write access is never allowed to code segments.
+Como podemos ver o primeiro bit (bit 43) é `0` para um segmento _data_ e `1` para um segmento _code_. Os próximos bits (40, 41, 42) podem ser `EWA`(*E*xpansion *W*ritable *A*ccessible) ou CRA(*C*onforming *R*eadable *A*ccessible).
+  * se E(bit 42) for igual a 0, ele é incrementado, caso contrário é reduzido. Leia mais [aqui](http://www.sudleyplace.com/dpmione/expanddown.html).
+  * se W(bit 41)(para segmentos de dados) for 1, o acesso de escrita é permitido caso contrário não. Vale ressaltar que o acesso a leitura é sempre permitido em segmentos de dados.
+  * A(bit 40) - indica se o segmento é acessado pelo processador ou não.
+  * C(bit 43) é o conforming bit/bit de conformidade(para segmentos de código). Se C for 1, o segmento de código pode ser executado com um nível inferior de privilégio, como por exemplo em nível de usuário. Se C for 0, ele pode somente ser executado com o mesmo nível de privilégio.
+  * R(bit 41)(para segmentos de código). Se for 1 o acesso a leitura no segmento é permitido caso contrário não. Acesso a escrita nunca é permitido em segmentos de código.
 
-4. DPL[2-bits] (Descriptor Privilege Level) is at bits 45-46. It defines the privilege level of the segment. It can be 0-3 where 0 is the most privileged.
+4. DPL[2-bits] (Descriptor Privilege Level/Descritor de Nível de Privilégio) está entre os bits 45-46. Ele define o nível de privilégio do segmento. O valor pode ser 0-3 onde 0 é o nível mais privilegiado.
 
-5. P flag(bit 47) - indicates if the segment is present in memory or not. If P is 0, the segment will be presented as _invalid_ and the processor will refuse to read this segment.
+5. Flag P(bit 47) - indica se o segmento está presente em memória ou não. Se P for 0, o segmento será apresentado como _invalid_ e o processador se recusará a ler este segmento.
 
-6. AVL flag(bit 52) - Available and reserved bits. It is ignored in Linux.
+6. Flag AVL (bit 52) - Disponível e reservada. Ela é ignorada no Linux.
 
-7. L flag(bit 53) - indicates whether a code segment contains native 64-bit code. If 1 then the code segment executes in 64-bit mode.
+7. Flag L(bit 53) - indica se o segmento de código contém ou não código 64-bit nativo. Se seu valor for 1 então o segmento executa em modo 64-bit.
 
-8. D/B flag(bit 54) - Default/Big flag represents the operand size i.e 16/32 bits. If it is set then 32 bit otherwise 16.
+8. Flag D/B(bit 54) - chamada de Default/Big ela representa o tamanho do operando, 16/32 bits. Se o bit estiver setado então o tamanho é 32 caso contrário 16.
 
-Segment registers contain segment selectors as in real mode. However, in protected mode, a segment selector is handled differently. Each Segment Descriptor has an associated Segment Selector which is a 16-bit structure:
+Registradores de Segmento contém seletores de segmento assim como no modo real. Entretanto, no modo protegido, o seletor de segmento é manuseado de forma diferente. Cada Descritor de Segmento tem um Seletor de Segmento associado que é uma estrutura de 16-bit:
 
 ```
  15             3 2  1     0
@@ -147,16 +147,16 @@ Segment registers contain segment selectors as in real mode. However, in protect
 -----------------------------
 ```
 
-Where,
-* **Index** shows the index number of the descriptor in the GDT.
-* **TI**(Table Indicator) shows where to search for the descriptor. If it is 0 then search in the Global Descriptor Table(GDT) otherwise it will look in Local Descriptor Table(LDT).
-* And **RPL** is Requester's Privilege Level.
+Onde,
+* **Index** mostra o número de indexação do descritor na GDT.
+* **TI**(Table Indicator) mostra onde procurar pelo descritor. Se ela for zero 0  então deve-se pesquisar na Global Descriptor Table(GDT), caso contrário na Local Descriptor Table(LDT).
+* E **RPL** é o Requester's Privilege Level/Nível de Privilégio do Requerente.
 
-Every segment register has a visible and hidden part.
-* Visible - Segment Selector is stored here
-* Hidden - Segment Descriptor(base, limit, attributes, flags)
+Cada registrador de segmento tem uma parte visível e outra não.
+* Visível - o Seletor de Segmento é armazenado aqui
+* Oculto - Descritor de segmento(base, limit, attributes, flags)
 
-The following steps are needed to get the physical address in the protected mode:
+Os seguintes passos são necessários para recuperarmos o endereço físico no modo protegido:
 
 * The segment selector must be loaded in one of the segment registers
 * The CPU tries to find a segment descriptor by GDT address + Index from selector and load the descriptor into the *hidden* part of the segment register
