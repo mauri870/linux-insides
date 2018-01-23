@@ -23,7 +23,7 @@ Todo o código apresentado foi baseado no kernel 3.18. Se houverem quaisquer mud
 O botão liga/desliga mágico, mas o que acontece depois?
 --------------------------------------------------------------------------------
 
-Apesar dessa série de posts ser sobre o kernel Linux, nós não iniciaremos pelo código do kernel em si, pelo menos não nesse parágrafo. Assim que você preciona o botão mágico no seu laptop ou computador, ele liga e inicia normalmente. A placa-mãe envia um sinal para a [fonte de alimentação](https://en.wikipedia.org/wiki/Power_supply) que após receber esse sinal, provê a quantia necessária de energia para o computador. Assim que a placa-mãe recebe de volta o [sinal power good](https://en.wikipedia.org/wiki/Power_good_signal) ela tenta iniciar o CPU. O CPU então limpa todo e qualquer resquício de dados nos seus registradores e preenche cada um deles com valores predefinidos.
+Apesar dessa série de posts ser sobre o kernel Linux, nós não iniciaremos pelo código do kernel em si, pelo menos não nesse parágrafo. Assim que você pressiona o botão mágico no seu laptop ou computador, ele liga e inicia normalmente. A placa-mãe envia um sinal para a [fonte de alimentação](https://en.wikipedia.org/wiki/Power_supply) que após receber esse sinal, provê a quantia necessária de energia para o computador. Assim que a placa-mãe recebe de volta o [sinal power good](https://en.wikipedia.org/wiki/Power_good_signal) ela tenta iniciar o CPU. O CPU então limpa todo e qualquer resquício de dados nos seus registradores e preenche cada um deles com valores predefinidos.
 
 
 [80386](https://en.wikipedia.org/wiki/Intel_80386) e processadores seguintes utilizam os seguintes dados predefinidos nos registradores depois que o computador é iniciado:
