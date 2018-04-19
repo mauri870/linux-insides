@@ -3,7 +3,7 @@ linux-insides
 
 Um livro em desenvolvimento sobre o kernel linux e seu funcionamento interno.
 
-**O objetivo é simples** - compartilhar o pouco que sei sobre o funcionamento interno do kernel linux e auxiliar os que estão interessados nesse assunto e em outras áreas relacionadas.
+**O objetivo é simples** - compartilhar o pouco que sei sobre o funcionamento interno do kernel linux e auxiliar os que estão interessados nesse assunto e em outras áreas relacionadas. Sinta-se a vontade para navergar pelo livro [começando por aqui](https://github.com/0xAX/linux-insides/blob/master/SUMMARY.md).
 
 **Questões/Sugestões**: Sinta se a vontade para tirar dúvidas ou me enviar sugestões pelo twitter [@0xAX](https://twitter.com/0xAX), criando uma [issue](https://github.com/0xAX/linux-insides/issues/new) ou simplesmente me enviando um [email](mailto:anotherworldofworld@gmail.com).
 
