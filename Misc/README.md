@@ -1,3 +1,3 @@
 # Misc
 
-This chapter contains parts which are not directly related to the Linux kernel source code and implementation of different subsystems.
+Este capítulo contém partes que não são diretamente relacionadas ao código fonte do kernel Linux ou tampouco da implementação de diferentes subsistemas.
