@@ -1,82 +1,83 @@
-Linux kernel development
+Desenvolvimento do Kernel linux
 ================================================================================
 
-Introduction
+Introdução
 --------------------------------------------------------------------------------
+Como vocês já sabem, eu iniciei uma série de [postagens em meu bog](http://0xax.github.io/categories/assembly/) no último ano sobre programação em assembly para arquiteturas `x86_64`. Eu nunca havia escrito uma linha de código de baixo nível antes disso, exceto por alguns exemplos de `Hello World` na universidade. Isso foi a bastante tempo atrás e, como eu já havia dito, eu nunca havia escrito uma linha de código de baixo nível até então. Algum tempo atrás eu comecei a me interessar em tais coisas. Eu entendi que eu posso escrever programas, mas eu na verdade não entendi como meu programa é organizado.
 
-As you already may know, I've started a series of [blog posts](http://0xax.github.io/categories/assembly/) about assembler programming for `x86_64` architecture in the last year. I have never written a line of low-level code before this moment, except for a couple of toy `Hello World` examples in university. It was a long time ago and, as I already said, I didn't write low-level code at all. Some time ago I became interested in such things. I understood that I can write programs, but didn't actually understand how my program is arranged.
+Após escrever algum código em assember eu comecei a entender como meu programa se assemelha após compilado, **aproximadamente**. Mas de qualquer forma, eu não entendi muitas outras coisas. Por exemplo: o que acontece quando a instrução `syscall` é executada em meu código assembler, o que acontece quando a função `printf` começa a funcionar, ou como pode meu programa conversar com outros computadores via rede.
 
-After writing some assembler code I began to understand how my program looks after compilation, **approximately**. But anyway, I didn't understand many other things. For example: what occurs when the `syscall` instruction is executed in my assembler, what occurs when the `printf` function starts to work or how can my program talk with other computers via network. [Assembler](https://en.wikipedia.org/wiki/Assembly_language#Assembler) programming language didn't give me answers to my questions and I decided to go deeper in my research. I started to learn from the source code of the Linux kernel and tried to understand the things that I'm interested in. The source code of the Linux kernel didn't give me the answers to **all** of my questions, but now my knowledge about the Linux kernel and the processes around it is much better.
 
-I'm writing this part nine and a half months after I've started to learn from the source code of the Linux kernel and published the first [part](https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-1.html) of this book. Now it contains forty parts and it is not the end. I decided to write this series about the Linux kernel mostly for myself. As you know the Linux kernel is very huge piece of code and it is easy to forget what does this or that part of the Linux kernel mean and how does it implement something. But soon the [linux-insides](https://github.com/0xAX/linux-insides) repo became popular and after nine months it has `9096` stars:
+A linguagem de programação [Assembler](https://en.wikipedia.org/wiki/Assembly_language#Assembler) não proveu respostas para as minhas questões e eu decidi me aprofundar em minha pesquisa. Eu comecei a aprender através do código fonte do kernel Linux e tentar entender as coisas que eu estava interessado. O código fonte do kernel Linux não me deu as respostas para **todas** as minhas questões, mas agora meu conhecimento sobre o kernel Linux e dos processos em sua volta é muito melhor.
+
+Eu estou escrevendo esta parte há nove meses e meio após eu começar a aprender através do código fonte do kernel Linux e então publicar a primeira [parte](https://0xax.gitbooks.io/linux-insides/content/Booting/linux-bootstrap-1.html) deste livro. Agora ele contém quarenta partes e isso não é o fim. Eu decidi escrever esta série sobre o kernel Linux eu mesmo. Como você sabe, o kernel Linux é um pedaço gigante de código e é fácil de esquecer o que essa ou aquela outra parte do kernel Linux significa e como isso implementa alguma coisa. Mas logo que o repositório [linux-insides](https://github.com/0xAX/linux-insides) tornou-se popular, e após nove meses, ele possui `9096` estrelas:
 
 ![github](http://s2.postimg.org/jjb3s4frt/stars.png)
 
-It seems that people are interested in the insides of the Linux kernel. Besides this, in all the time that I have been writing `linux-insides`, I have received many questions from different people about how to begin contributing to the Linux kernel. Generally people are interested in contributing to open source projects and the Linux kernel is not an exception:
+Parece que as pessoas estão interessadas no kernel Linux. Além disso, durante todo o tempo em que eu estive escrevendo `linux-insides`, eu tenho recebido muitas perguntas de diferentes pessoas sobre como começar a contribuir para o kernel Linux. Geralmente pessoas estão interessadas em contribuir para projetos open-source e o kernel Linux não é uma exceção:
 
 ![google-linux](http://s4.postimg.org/yg9z5zx0d/google_linux.png)
 
-So, it seems that people are interested in the Linux kernel development process. I thought it would be strange if a book about the Linux kernel would not contain a part describing how to take a part in the Linux kernel development and that's why I decided to write it. You will not find information about why you should be interested in contributing to the Linux kernel in this part. But if you are interested how to start with Linux kernel development, this part is for you.
+Então, parece que as pessoas estão interessadas no processo de desenvolvimento do kernel Linux. Eu pensava que seria estranho se um livro sobre o kernel Linux não contesse uma parte descrevendo como fazer parte do desenvolvimento do kernel Linux e isso é a razão pela qual eu decidi escrever este livro. Você não irá encontrar informações sobre por que você deveria estar interessado em contribuir para o kernel Linux nesta parte. Mas se você está interessado em como iniciar com o desenvolvimento do kernel Linux, esta parte é para você.
 
-Let's start.
+Vamos começar.
 
-How to start with Linux kernel
+Como iniciar com o kernel Linux
 ---------------------------------------------------------------------------------
 
-First of all, let's see how to get, build, and run the Linux kernel. You can run your custom build of the Linux kernel in two ways:
+Primeiro de tudo, vamos começar em como obter, compilar, e executar o kernel Linux. Você pode executar seu compilado customizado do kernel Linux de duas formas:
+* Rodando o kernel Linux em uma máquina virtual;
+* Rodando o kernel Linux em uma máquina real.
 
-* Run the Linux kernel on a virtual machine;
-* Run the Linux kernel on real hardware.
+Eu irei guiá-lo em ambos os métodos. Antes de nós começarmos a fazer qualquer coisa com o kernel Linux, nós precisamos obtê-lo. Existem algumas maneiras de se fazer isso dependendo de sua proposta. Se você apenas quer atualizar a versão atual do kernel Linux no seu computador, você pode utilizar as instruções específicas para a sua [distribuição](https://en.wikipedia.org/wiki/Linux_distribution) Linux.
 
-I'll provide descriptions for both methods. Before we start doing anything with the Linux kernel, we need to get it. There are a couple of ways to do this depending on your purpose. If you just want to update the current version of the Linux kernel on your computer, you can use the instructions specific to your Linux [distro](https://en.wikipedia.org/wiki/Linux_distribution).
-
-In the first case you just need to download new version of the Linux kernel with the [package manager](https://en.wikipedia.org/wiki/Package_manager). For example, to upgrade the version of the Linux kernel to `4.1` for [Ubuntu (Vivid Vervet)](http://releases.ubuntu.com/15.04/), you will just need to execute the following commands:
+No primeiro caso você apenas precisa baixar uma nova versão do kernel Linux utilizando o [package manager](https://en.wikipedia.org/wiki/Package_manager). Por exemplo, para atualizar a versão do kernel Linux para a versão `4.1` para o [Ubuntu (Vivid Vervet)](http://releases.ubuntu.com/15.04/), você irá apenas precisar executar os seguintes comandos:
 
 ```
 $ sudo add-apt-repository ppa:kernel-ppa/ppa
 $ sudo apt-get update
 ```
 
-After this execute this command:
+Após isso, execute estes comandos:
 
 ```
 $ apt-cache showpkg linux-headers
 ```
 
-and choose the version of the Linux kernel in which you are interested. In the end execute the next command and replace `${version}` with the version that you chose in the output of the previous command:
+e escolha a versão do kernel Linux no qual você está interessado. No final, execute o próximo comando e substitua `${version}` com a versão que você escolheu na saída do comando anterior:
 
 ```
 $ sudo apt-get install linux-headers-${version} linux-headers-${version}-generic linux-image-${version}-generic --fix-missing
 ```
 
-and reboot your system. After the reboot you will see the new kernel in the [grub](https://en.wikipedia.org/wiki/GNU_GRUB) menu.
+e então reinicie seu sistema. Após reiniciá-lo, você verá o novo kernel no menu do [grub](https://en.wikipedia.org/wiki/GNU_GRUB).
 
-In the other way if you are interested in the Linux kernel development, you will need to get the source code of the Linux kernel. You can find it on the [kernel.org](https://kernel.org/) website and download an archive with the Linux kernel source code. Actually the Linux kernel development process is fully built around `git` [version control system](https://en.wikipedia.org/wiki/Version_control). So you can get it with `git` from the `kernel.org`:
+De outra forma, se você está interessado no desenvolvimento do kernel Linux, você irá precisar obter o código fonte do kernel Linux. Você pode encontrá-lo no website [kernel.org](https://kernel.org/) e baixar um arquivo com o código fonte do kernel Linux. Na realidade, o processo de desenvolvimento do kernel Linux é completamente realizado em torno do `git` [version control system](https://en.wikipedia.org/wiki/Version_control). Então, você pode obtê-lo utilizando o `git` através do `kernel.org`:
 
 ```
 $ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 ```
 
-I don't know how about you, but I prefer `github`. There is a [mirror](https://github.com/torvalds/linux) of the Linux kernel mainline repository, so you can clone it with:
+Eu não sei quanto a você, mas eu prefiro o `github`. Existe um [mirror](https://github.com/torvalds/linux) do repositório principal do kernel Linux, desta forma você pode clona-lo com:
 
 ```
 $ git clone git@github.com:torvalds/linux.git
 ```
 
-I  use my own [fork](https://github.com/0xAX/linux) for development and when I want to pull updates from the main repository I just execute the following command:
+Eu utilizo meu próprio [fork](https://github.com/0xAX/linux) para o desenvolvimento e quando eu quero obter atualizações do repositório principal, eu apenas executo o seguinte comando:
 
 ```
 $ git checkout master
 $ git pull upstream master
 ```
 
-Note that the remote name of the main repository is `upstream`. To add a new remote with the main Linux repository you can execute:
+Note que o nome remoto do repositório principal é `upstream`. Para adicionar um novo remoto com o repositório principal do Linux, você pode executar:
 
 ```
 git remote add upstream git@github.com:torvalds/linux.git
 ```
 
-After this you will have two remotes:
+Após isso, você terá dois remotos:
 
 ```
 ~/dev/linux (master) $ git remote -v
@@ -86,37 +87,37 @@ upstream	https://github.com/torvalds/linux.git (fetch)
 upstream	https://github.com/torvalds/linux.git (push)
 ```
 
-One is of your fork (`origin`) and the second is for the main repository (`upstream`).
+Um é o seu fork (`origin`) e o segundo é para o repositório principal (`upstream`).
 
-Now that we have a local copy of the Linux kernel source code, we need to configure and build it. The Linux kernel can be configured in different ways. The simplest way is to just copy the configuration file of the already installed kernel that is located in the `/boot` directory:
+Agora que nós temos uma cópia local do código fonte do kernel Linux, nós precisamos configurá-lo e compilá-lo. O kernel Linux pode ser configurado de diferentes formas. A forma mais simples é apenas copiar o arquivo de configuração do kernel já instalado em sua máquina que está localizado no diretório `/boot`:
 
 ```
 $ sudo cp /boot/config-$(uname -r) ~/dev/linux/.config
 ```
 
-If your current Linux kernel was built with the support for access to the `/proc/config.gz` file, you can copy your actual kernel configuration file with this command:
+Se o seu kernel Linux atual foi compilado com o suporte para o acesso ao arquivo `/proc/config.gz`, você pode copiar o arquivo de configuração do seu kernel atual com o seguinte comando:
 
 ```
 $ cat /proc/config.gz | gunzip > ~/dev/linux/.config
 ```
 
-If you are not satisfied with the standard kernel configuration that is provided by the maintainers of your distro, you can configure the Linux kernel manually. There are a couple of ways to do it. The Linux kernel root [Makefile](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/Makefile) provides a set of targets that allows you to configure it. For example `menuconfig` provides a menu-driven interface for the kernel configuration:
+Se você não está satisfeito com a configuração padrão do kernel que é providenciada pelos mantenedores de sua distribuição, você pode configurar o kernel Linux manualmente. Existem algumas formas de se fazer isso. O [Makefile](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/Makefile) raíz do kernel Linux fornece um conjunto de alvos que possibilita que você os configure. Por exemplo, `menuconfig` fornece uma interface baseada em menus para a configuração do kernel:
 
 ![menuconfig](http://s21.postimg.org/zcz48p7yf/menucnonfig.png)
 
-The `defconfig` argument generates the default kernel configuration file for the current architecture, for example [x86_64 defconfig](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/arch/x86/configs/x86_64_defconfig). You can pass the `ARCH` command line argument to `make` to build `defconfig` for the given architecture:
+O argumento `defconfig` gera o arquivo de configuração padrão para a arquitetura atual, por exemplo [x86_64 defconfig](https://github.com/torvalds/linux/blob/16f73eb02d7e1765ccab3d2018e0bd98eb93d973/arch/x86/configs/x86_64_defconfig). Você pode passar o argumento via linha de commando `ARCH` para o `make` para compilar o `defconfig` para a dada arquitetura:
 
 ```
 $ make ARCH=arm64 defconfig
 ```
 
-The `allnoconfig`, `allyesconfig` and `allmodconfig` arguments allow you to generate a new configuration file where all options will be disabled, enabled, and enabled as modules respectively. The `nconfig` command line arguments that provides `ncurses` based program with menu to configure Linux kernel:
+Os argumentos `allnoconfig`, `allyesconfig` e `allmodconfig` possibilitam que você gere um novo arquivo de configuração onde todas as opções serão desabilitadas, habilitadas, e habilitadas como módulos, respectivamente. O argumento de linha de comando `nconfig` que provê  o programa `ncurses` com o menu para configurar o kernel Linux:
 
 ![nconfig](http://s29.postimg.org/hpghikp4n/nconfig.png)
 
-And even `randconfig` to generate random Linux kernel configuration file. I will not write about how to configure the Linux kernel or which options to enable because it makes no sense to do so for two reasons: First of all I do not know your hardware and second, if you know your hardware, the only remaining task is to find out how to use programs for kernel configuration, and all of them are pretty simple to use.
+E até mesmo o `randconfig` para gerar um arquivo de configuração do kernel Linux aleatório.  Eu não irei escrever sobre como configurar o kernel Linux ou quais opções devem ser habilitadas pois isso não faz sentido de ser feito por dois motivos: Primeiro de tudo eu não sei o seu hardware, e segundo, se você conhece o seu hardware, a única tarefa restante é encontrar como utilizar os programas para a configuração do kernel, e todos eles são bastante simples de utilizar.
 
-OK, we now have the source code of the Linux kernel and configured it. The next step is the compilation of the Linux kernel. The simplest way to compile Linux kernel is to just execute:
+OK, agora nós temos o código fonte do kernel Linux configurado. O próximo passo é a compilação do kernel Linux. A forma mais simples de compilar o kernel Linux é apenas executando:
 
 ```
 $ make
@@ -142,30 +143,30 @@ CRC 82703414
 Kernel: arch/x86/boot/bzImage is ready  (#73)
 ```
 
-To increase the speed of kernel compilation you can pass `-jN` command line argument to `make`, where `N` specifies the number of commands to run simultaneously:
+Para aumentar a velocidade em que o kernel é compilado, você pode adicionar o argumento de linha de comando `-jN` ao `make`, onde `N` especifica o número de comandos para executar simultaneamente (porém isso é diretamente limitado pelo número de cores disponível em seu computador):
 
 ```
 $ make -j8
 ```
 
-If you want to build Linux kernel for an architecture that differs from your current, the simplest way to do it pass two arguments:
+Se você quer compilar o kernel Linux para uma arquitetura que é diferente da sua atual, a forma mais simples de fazer isso é passando dois argumentos junto da linha de comando:
 
-* `ARCH` command line argument and the name of the target architecture;
-* `CROSS_COMPILER` command line argument and the cross-compiler tool prefix;
+* `ARCH` e o nome da arquitetura alvo;
+* `CROSS_COMPILER` e o prefixo da ferramenta de croscompilação.
 
-For example if we want to compile the Linux kernel for the [arm64](https://en.wikipedia.org/wiki/ARM_architecture#AArch64_features) with default kernel configuration file, we need to execute following command:
+Por exemplo, se nós quisermos compilar o kernel Linux para a arquitetura [arm64](https://en.wikipedia.org/wiki/ARM_architecture#AArch64_features) com o arquivo de configuração do kernel padrão, nós precisamos executar os seguintes comandos:
 
 ```
 $ make -j4 ARCH=arm64 CROSS_COMPILER=aarch64-linux-gnu- defconfig
 $ make -j4 ARCH=arm64 CROSS_COMPILER=aarch64-linux-gnu-
 ```
 
-As result of compilation we can see the compressed kernel - `arch/x86/boot/bzImage`. Now that we have compiled the kernel, we can either install it on our computer or just run it in an emulator.
+Como resultado da compilação, nós podemos ver o a imagem comprimida do kernel - `arch/x86/boot/bzImage`. Agora que nós temos o kernel compilado, nós podemos tanto instalá-lo em nosso computador ou apenas executá-lo em um emulador.
 
-Installing Linux kernel
+Instalando o kernel Linux
 --------------------------------------------------------------------------------
 
-As I already wrote we will consider two ways how to launch new kernel: In the first case we can install and run the new version of the Linux kernel on the real hardware and the second is launch the Linux kernel on a virtual machine. In the previous paragraph we saw how to build the Linux kernel from source code and as a result we have got compressed image:
+Como eu já havia escrito, nós vamos considerar duas formas de como executar um novo kernel: No primeiro caso nós vamos instalar e executar a nova versão do kernel Linux em um hardware real, e a segunda forma é executar o kernel Linux em uma máquina virtual. No parágrafo anterior nós vimos como compilar o kernel Linux a partir do código fonte e como resultado, nós obtivemos a imagem comprimida:
 
 ```
 ...
@@ -174,20 +175,20 @@ As I already wrote we will consider two ways how to launch new kernel: In the fi
 Kernel: arch/x86/boot/bzImage is ready  (#73)
 ```
 
-After we have got the [bzImage](https://en.wikipedia.org/wiki/Vmlinux#bzImage) we need to install `headers`, `modules` of the new Linux kernel with the:
+Após obtermos a imagem comprimida [bzImage](https://en.wikipedia.org/wiki/Vmlinux#bzImage) nós precisamos instalar os `cabeçalhos` (`headers` do inglês), e os `módulos` (`modules` do inglês) do novo kernel Linux com os seguintes comandos:
 
 ```
 $ sudo make headers_install
 $ sudo make modules_install
 ```
 
-and directly the kernel itself:
+e a instalação do próprio kernel:
 
 ```
 $ sudo make install
 ```
 
-From this moment we have installed new version of the Linux kernel and now we must tell the `bootloader` about it. Of course we can add it manually by the editing of the `/boot/grub2/grub.cfg` configuration file, but I prefer to use a script for this purpose. I'm using two different Linux distros: Fedora and Ubuntu. There are two different ways to update the [grub](https://en.wikipedia.org/wiki/GNU_GRUB) configuration file. I'm using following script for this purpose:
+A partir deste momento nós instalamos uma nova versão do kernel Linux e agora nós precisamos informar o `bootloader` sobre isso. É claro que nós podemos adicionar esta informação manualmente editando o arquivo de configuração `/boot/grub2/grub.cfg`, mas eu prefiro utilizar um script para este propósito. Eu estou utilizando duas distribuições Linux: Fedora e Ubuntu. Existem duas formas diferentes de atualizar o arquivo de configuração do [grub](https://en.wikipedia.org/wiki/GNU_GRUB). Eu estou utilizando o script a seguir para este propósito:
 
 ```shell
 #!/bin/bash
@@ -207,11 +208,11 @@ fi
 echo "${Green}Done.${Color_Off}"
 ```
 
-This is the last step of the new Linux kernel installation and after this you can reboot your computer and select new version of the kernel during boot.
+Este é o último passo para a nova instalação do kernel Linux e após isso você pode reiniciar seu computador e selecionar a nova versão do kernel durante o processo de boot.
 
-The second case is to launch new Linux kernel in the virtual machine. I prefer [qemu](https://en.wikipedia.org/wiki/QEMU). First of all we need to build initial ramdisk - [initrd](https://en.wikipedia.org/wiki/Initrd) for this. The `initrd` is a temporary root file system that is used by the Linux kernel during initialization process while other filesystems are not mounted. We can build `initrd` with the following commands:
+O segundo caso é executar o kernel Linux em uma máquina virtual. Eu prefiro utilizar o [qemu](https://en.wikipedia.org/wiki/QEMU). Primeiramente, nós precisamos compilar o `initial ramdisk` - [initrd](https://en.wikipedia.org/wiki/Initrd) para isso. O `initrd` é um sistema de arquivos raíz temporário que é utilizado pelo kernel Linux durante o processo de initialização enquanto outros sistemas de arquivos não são montados. Nós podemos compilar o `initrd` com os seguintes comandos:
 
-First of all we need to download [busybox](https://en.wikipedia.org/wiki/BusyBox) and run `menuconfig` for its configuration:
+Antes de tudo, nós precisamos baixar o [busybox](https://en.wikipedia.org/wiki/BusyBox) e executar o `menuconfig` para configurá-lo:
 
 ```shell
 $ mkdir initrd
@@ -222,25 +223,25 @@ $ make menuconfig
 $ make -j4
 ```
 
-`busybox` is an executable file - `/bin/busybox` that contains a set of standard tools like [coreutils](https://en.wikipedia.org/wiki/GNU_Core_Utilities). In the `busysbox` menu we need to enable: `Build BusyBox as a static binary (no shared libs)` option:
+O `busybox` é um arquivo executável - `/bin/busybox` que contém um conjunto de ferramentas padrões como o [coreutils](https://en.wikipedia.org/wiki/GNU_Core_Utilities). No menu do `busysbox` nós precisamos habilitar a opção `Build BusyBox as a static binary (no shared libs)`:
 
 ![busysbox menu](http://s18.postimg.org/sj92uoweh/busybox.png)
 
-We can find this menu in the:
+Nós podemos encontrar este menu em:
 
 ```
 Busybox Settings
 --> Build Options
 ```
 
-After this we exit from the `busysbox` configuration menu and execute following commands for building and installation of it:
+Após isso, nós podemos sair do menu de configuração do `busybox` e executar os seguintes comandos para a compilação e instalação dele:
 
 ```
 $ make -j4
 $ sudo make install
 ```
 
-Now that `busybox` is installed, we can begin building our `initrd`. To do this, we go to the previous `initrd` directory and:
+Agora que o `busybox` está instalado, nós podemos começar a compilar o nosso `initrd`. Para fazer isso, vamos até o diretório anterior `initrd` e:
 
 ```
 $ cd ..
@@ -250,7 +251,7 @@ $ mkdir -pv {bin,sbin,etc,proc,sys,usr/{bin,sbin}}
 $ cp -av ../busybox-1.23.2/_install/* .
 ```
 
-copy `busybox` fields to the `bin`, `sbin` and other directories. Now we need to create executable `init` file that will be executed as a first process in the system. My `init` file just mounts [procfs](https://en.wikipedia.org/wiki/Procfs) and [sysfs](https://en.wikipedia.org/wiki/Sysfs) filesystems and executed shell:
+copiamos os arquivos gerados do `busybox` para os diretórios `bin`, `sbin` e outros listados no comando. Agora nós precisamos criar o arquivo executável `init` que será executado como o primeiro processo no sistema. O meu arquivo `init` apenas monta o sistema de arquivos [procfs](https://en.wikipedia.org/wiki/Procfs) e [sysfs](https://en.wikipedia.org/wiki/Sysfs) e então executa o shell:
 
 ```shell
 #!/bin/sh
@@ -261,7 +262,7 @@ mount -t sysfs none /sys
 exec /bin/sh
 ```
 
-Now we can create an archive that will be our `initrd`:
+Agora nós podemos criar um arquivo que será o nosso `initrd`:
 
 ```
 $ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ~/dev/initrd_x86_64.gz
